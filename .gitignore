@@ -1,0 +1,16 @@
+# Virtual environment
+venv/
+env/
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Data and model files (large, generated)
+data/
+models/
+
+# OS junk
+.DS_Store
+Thumbs.db
