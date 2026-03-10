@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>High-Level Architecture Diagram</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f8fc;
+    --surface: #ffffff;
+    --surface-2: #f0f2fa;
+    --border: #e2e6f3;
+    --text-primary: #1a1d2e;
+    --text-secondary: #5a6080;
+    --text-muted: #9aa0bb;
+    --accent-blue: #3b6ef8;
+    --accent-teal: #0db8a0;
+    --accent-violet: #7c5cfc;
+    --accent-amber: #f4a020;
+    --accent-rose: #f05a7c;
+    --accent-green: #22c080;
+    --shadow-sm: 0 1px 3px rgba(30,40,100,0.07), 0 1px 2px rgba(30,40,100,0.04);
+    --shadow-md: 0 4px 16px rgba(30,40,100,0.09), 0 2px 6px rgba(30,40,100,0.05);
+    --shadow-lg: 0 12px 32px rgba(30,40,100,0.12), 0 4px 12px rgba(30,40,100,0.06);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 40px 24px 60px;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+
+  .page-header p {
+    font-size: 13.5px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .diagram {
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+
+  /* ── ROW LAYOUTS ── */
+  .row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 20px;
+    position: relative;
+  }
+
+  .row.centered { justify-content: center; }
+
+  /* ── NODE ── */
+  .node {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    min-width: 168px;
+    max-width: 220px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    transition: box-shadow 0.2s, transform 0.2s;
+    cursor: default;
+    flex: 0 0 auto;
+  }
+
+  .node:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .node-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-size: 17px;
+  }
+
+  .node-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.35;
+    margin-bottom: 4px;
+  }
+
+  .node-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10.5px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  .node-tag {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  /* Color variants */
+  .node.blue   { border-color: #c4d4fd; }
+  .node.blue   .node-icon { background: #eef2ff; color: var(--accent-blue); }
+  .node.blue   .node-tag  { background: #eef2ff; color: var(--accent-blue); }
+
+  .node.teal   { border-color: #b0ecdf; }
+  .node.teal   .node-icon { background: #e6faf5; color: var(--accent-teal); }
+  .node.teal   .node-tag  { background: #e6faf5; color: var(--accent-teal); }
+
+  .node.violet { border-color: #d4c8fd; }
+  .node.violet .node-icon { background: #f0eeff; color: var(--accent-violet); }
+  .node.violet .node-tag  { background: #f0eeff; color: var(--accent-violet); }
+
+  .node.amber  { border-color: #fce5b2; }
+  .node.amber  .node-icon { background: #fff8e8; color: var(--accent-amber); }
+  .node.amber  .node-tag  { background: #fff8e8; color: var(--accent-amber); }
+
+  .node.rose   { border-color: #fcc8d4; }
+  .node.rose   .node-icon { background: #fff0f4; color: var(--accent-rose); }
+  .node.rose   .node-tag  { background: #fff0f4; color: var(--accent-rose); }
+
+  .node.green  { border-color: #b6eedd; }
+  .node.green  .node-icon { background: #eafaf4; color: var(--accent-green); }
+  .node.green  .node-tag  { background: #eafaf4; color: var(--accent-green); }
+
+  .node.gray   { border-color: #dde2f0; }
+  .node.gray   .node-icon { background: #f4f5fb; color: var(--text-secondary); }
+  .node.gray   .node-tag  { background: #f4f5fb; color: var(--text-secondary); }
+
+  /* ── ARROWS / CONNECTORS ── */
+  svg.arrows {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    overflow: visible;
+  }
+
+  /* ── VERTICAL CONNECTOR ── */
+  .v-connector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 38px;
+    position: relative;
+  }
+
+  .v-connector::before {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 14px;
+    left: 50%; transform: translateX(-50%);
+    width: 1.5px;
+    background: linear-gradient(to bottom, var(--border), #c5cbe8);
+  }
+
+  .v-connector .arrow-head {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid #c5cbe8;
+  }
+
+  .v-connector .label {
+    position: absolute;
+    right: calc(50% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  /* ── SPLIT CONNECTOR (one → two) ── */
+  .split-wrap {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 4px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0 auto 20px;
+    letter-spacing: 0.4px;
+  }
+
+  .section-badge .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+
+  /* ── GROUPS ── */
+  .group-box {
+    background: var(--surface-2);
+    border: 1.5px dashed var(--border);
+    border-radius: 16px;
+    padding: 20px 20px 16px;
+    position: relative;
+    margin: 0 auto;
+  }
+
+  .group-box .group-label {
+    position: absolute;
+    top: -11px;
+    left: 20px;
+    background: var(--bg);
+    padding: 0 8px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+  }
+
+  /* ── OUTPUT TAGS in nodes ── */
+  .output-list {
+    margin-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    justify-content: center;
+  }
+
+  .out-tag {
+    font-size: 9.5px;
+    font-family: 'DM Mono', monospace;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+
+  /* ── API ENDPOINTS ── */
+  .endpoint-list {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: center;
+  }
+
+  .ep {
+    font-family: 'DM Mono', monospace;
+    font-size: 9.5px;
+    padding: 2px 7px;
+    border-radius: 5px;
+    display: inline-block;
+  }
+
+  .ep.get  { background: #eef8f0; color: #1e9a50; border: 1px solid #c0e8cd; }
+  .ep.post { background: #eef2ff; color: var(--accent-blue); border: 1px solid #c4d4fd; }
+
+  /* ── HORIZONTAL ROW WITH SVG ARROWS ── */
+  .h-row-wrap {
+    position: relative;
+    width: 100%;
+  }
+
+  /* ── LEGEND ── */
+  .legend {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 44px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+  }
+
+  .legend-line {
+    width: 28px;
+    height: 1.5px;
+    background: #c5cbe8;
+    position: relative;
+  }
+
+  .legend-line::after {
+    content: '';
+    position: absolute;
+    right: -1px; top: -3.5px;
+    width: 0; height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 0;
+    border-bottom: 0;
+    border-left: 7px solid #c5cbe8;
+  }
+
+  .legend-dashed {
+    width: 28px;
+    height: 1.5px;
+    background: repeating-linear-gradient(
+      90deg, #c5cbe8 0, #c5cbe8 4px, transparent 4px, transparent 8px
+    );
+  }
+
+  /* ── MAIN PIPELINE ── */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* inline arrow label */
+  .v-connector.labeled .label-right {
+    position: absolute;
+    left: calc(50% + 12px);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--accent-blue);
+    background: #eef2ff;
+    border: 1px solid #c4d4fd;
+    border-radius: 5px;
+    padding: 1px 7px;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  /* ── WIDE SPLIT ── */
+  .wide-split {
+    display: grid;
+    grid-template-columns: 1fr 40px 1fr;
+    align-items: start;
+    gap: 0;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .wide-split .left-col,
+  .wide-split .right-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .wide-split .center-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 19px;
+  }
+
+  /* branch line */
+  .branch-line-h {
+    height: 1.5px;
+    background: linear-gradient(to right, #c5cbe8, #c5cbe8);
+    width: 100%;
+  }
+
+  .branch-line-v {
+    width: 1.5px;
+    background: #c5cbe8;
+    flex: 1;
+  }
+
+  /* ── FLOW LINE (pure SVG inline) ── */
+  .svg-layer {
+    width: 100%;
+    overflow: visible;
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>High‑Level Architecture Diagram</h1>
+  <p>Semantic Search System · 20 Newsgroups · Fuzzy Clustering + FAISS + FastAPI</p>
+</div>
+
+<div class="diagram">
+
+  <!-- ══════════════════ INGESTION PIPELINE ══════════════════ -->
+  <div class="section-badge" style="margin-bottom:24px;">
+    <span class="dot" style="background:var(--accent-blue)"></span>
+    Ingestion &amp; Indexing Pipeline
+  </div>
+
+  <div class="pipeline">
+
+    <!-- 1. Dataset -->
+    <div class="node blue" style="width:210px;">
+      <div class="node-icon">📂</div>
+      <div class="node-label">20 Newsgroups Dataset</div>
+      <div class="node-sub">~18,000 documents · 20 topics</div>
+      <span class="node-tag">Input</span>
+    </div>
+
+    <!-- arrow down -->
+    <div class="v-connector">
+      <div class="arrow-head"></div>
+    </div>
+
+    <!-- 2. Preprocessing -->
+    <div class="node teal" style="width:210px;">
+      <div class="node-icon">🧹</div>
+      <div class="node-label">Preprocessing</div>
+      <div class="node-sub">strip headers · footers · quotes</div>
+      <span class="node-tag">Clean Text</span>
+    </div>
+
+    <!-- arrow down -->
+    <div class="v-connector">
+      <div class="arrow-head"></div>
+    </div>
+
+    <!-- 3. Embeddings -->
+    <div class="node violet" style="width:230px;">
+      <div class="node-icon">🔢</div>
+      <div class="node-label">Sentence Embeddings</div>
+      <div class="node-sub">all-MiniLM-L6-v2</div>
+      <div class="output-list">
+        <span class="out-tag">384-dim vectors</span>
+        <span class="out-tag">float32</span>
+      </div>
+    </div>
+
+    <!-- SPLIT: Embeddings → FAISS  +  Embeddings → Clustering -->
+    <div style="position:relative; width:600px; height:70px; margin: 0 auto;">
+      <svg width="100%" height="70" style="overflow:visible;">
+        <!-- left branch to FAISS -->
+        <line x1="300" y1="0" x2="300" y2="18" stroke="#c5cbe8" stroke-width="1.5"/>
+        <!-- horizontal to left -->
+        <line x1="150" y1="18" x2="300" y2="18" stroke="#c5cbe8" stroke-width="1.5"/>
+        <!-- horizontal to right -->
+        <line x1="300" y1="18" x2="450" y2="18" stroke="#c5cbe8" stroke-width="1.5"/>
+        <!-- drop left -->
+        <line x1="150" y1="18" x2="150" y2="56" stroke="#c5cbe8" stroke-width="1.5"/>
+        <!-- drop right -->
+        <line x1="450" y1="18" x2="450" y2="56" stroke="#c5cbe8" stroke-width="1.5"/>
+        <!-- arrowheads -->
+        <polygon points="145,52 155,52 150,60" fill="#c5cbe8"/>
+        <polygon points="445,52 455,52 450,60" fill="#c5cbe8"/>
+      </svg>
+    </div>
+
+    <!-- Row: FAISS  +  Clustering -->
+    <div style="display:flex; gap:160px; justify-content:center; width:600px; margin:0 auto;">
+
+      <!-- 5. FAISS -->
+      <div class="node amber" style="width:200px;">
+        <div class="node-icon">⚡</div>
+        <div class="node-label">FAISS Index</div>
+        <div class="node-sub">IndexFlatL2 / IVFFlat</div>
+        <div class="output-list">
+          <span class="out-tag">ANN search</span>
+          <span class="out-tag">fast retrieval</span>
+        </div>
+      </div>
+
+      <!-- 4. Fuzzy Clustering GMM -->
+      <div class="node rose" style="width:200px;">
+        <div class="node-icon">🔮</div>
+        <div class="node-label">Fuzzy Clustering (GMM)</div>
+        <div class="node-sub">Gaussian Mixture Model</div>
+        <div class="output-list">
+          <span class="out-tag">probabilities</span>
+          <span class="out-tag">centroids</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- arrows from both down to cache -->
+    <div style="position:relative; width:600px; height:64px; margin:0 auto;">
+      <svg width="100%" height="64" style="overflow:visible;">
+        <!-- from FAISS left col down and merge to center -->
+        <line x1="150" y1="0" x2="150" y2="26" stroke="#c5cbe8" stroke-width="1.5"/>
+        <!-- from GMM right col down -->
+        <line x1="450" y1="0" x2="450" y2="26" stroke="#c5cbe8" stroke-width="1.5"/>
+        <!-- horizontals to center -->
+        <line x1="150" y1="26" x2="300" y2="26" stroke="#c5cbe8" stroke-width="1.5"/>
+        <line x1="300" y1="26" x2="450" y2="26" stroke="#c5cbe8" stroke-width="1.5"/>
+        <!-- center drop -->
+        <line x1="300" y1="26" x2="300" y2="56" stroke="#c5cbe8" stroke-width="1.5"/>
+        <polygon points="295,52 305,52 300,60" fill="#c5cbe8"/>
+        <!-- label on GMM arrow -->
+        <text x="468" y="20" font-size="10" fill="#9aa0bb" font-family="DM Sans">cluster assignments</text>
+      </svg>
+    </div>
+
+    <!-- 6. Cluster-Partitioned Cache -->
+    <div class="node green" style="width:270px;">
+      <div class="node-icon">🗄️</div>
+      <div class="node-label">Cluster‑Partitioned Cache</div>
+      <div class="node-sub">one LRU cache per cluster</div>
+      <div class="output-list">
+        <span class="out-tag">cache[0]</span>
+        <span class="out-tag">cache[1]</span>
+        <span class="out-tag">… cache[n]</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════ QUERY PIPELINE ══════════════════ -->
+  <div class="section-badge" style="margin-top:44px; margin-bottom:24px;">
+    <span class="dot" style="background:var(--accent-rose)"></span>
+    Query / Serving Pipeline
+  </div>
+
+  <!-- Query flow as a horizontal strip -->
+  <div style="display:flex; align-items:flex-start; justify-content:center; gap:0; width:100%; max-width:900px; margin:0 auto;">
+
+    <!-- Query Input -->
+    <div style="display:flex; flex-direction:column; align-items:center;">
+      <div class="node gray" style="width:148px;">
+        <div class="node-icon">💬</div>
+        <div class="node-label">User Query</div>
+        <div class="node-sub">raw text string</div>
+      </div>
+    </div>
+
+    <!-- arrow right -->
+    <div style="display:flex; align-items:center; height:90px;">
+      <svg width="48" height="24" style="overflow:visible;">
+        <line x1="0" y1="12" x2="36" y2="12" stroke="#c5cbe8" stroke-width="1.5"/>
+        <polygon points="32,7 32,17 42,12" fill="#c5cbe8"/>
+      </svg>
+    </div>
+
+    <!-- FastAPI Service -->
+    <div style="display:flex; flex-direction:column; align-items:center;">
+      <div class="node blue" style="width:190px;">
+        <div class="node-icon">🚀</div>
+        <div class="node-label">FastAPI Service</div>
+        <div class="endpoint-list">
+          <span class="ep post">POST /query</span>
+          <span class="ep get">GET  /cache/stats</span>
+          <span class="ep post">DELETE /cache</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- arrow right: embed + cluster -->
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:90px; gap:2px;">
+      <svg width="68" height="24" style="overflow:visible;">
+        <line x1="0" y1="12" x2="55" y2="12" stroke="#c5cbe8" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <polygon points="51,7 51,17 61,12" fill="#c5cbe8"/>
+        <text x="6" y="9" font-size="9" fill="#9aa0bb" font-family="DM Sans">embed+cluster</text>
+      </svg>
+    </div>
+
+    <!-- Cache Lookup -->
+    <div style="display:flex; flex-direction:column; align-items:center;">
+      <div class="node green" style="width:165px;">
+        <div class="node-icon">✅</div>
+        <div class="node-label">Cache Lookup</div>
+        <div class="node-sub">cluster-aware LRU</div>
+        <div class="output-list"><span class="out-tag">HIT → return</span></div>
+      </div>
+    </div>
+
+    <!-- arrow: cache miss path -->
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:90px;">
+      <svg width="66" height="24" style="overflow:visible;">
+        <line x1="0" y1="12" x2="54" y2="12" stroke="#f4a020" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <polygon points="50,7 50,17 60,12" fill="#f4a020"/>
+        <text x="4" y="9" font-size="9" fill="#f4a020" font-family="DM Sans" font-weight="500">MISS</text>
+      </svg>
+    </div>
+
+    <!-- FAISS search on miss -->
+    <div style="display:flex; flex-direction:column; align-items:center;">
+      <div class="node amber" style="width:165px;">
+        <div class="node-icon">🔍</div>
+        <div class="node-label">FAISS Search</div>
+        <div class="node-sub">k-NN retrieval</div>
+        <div class="output-list"><span class="out-tag">top-k results</span></div>
+      </div>
+    </div>
+
+    <!-- arrow: store in cache -->
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:90px;">
+      <svg width="56" height="24" style="overflow:visible;">
+        <line x1="0" y1="12" x2="44" y2="12" stroke="#c5cbe8" stroke-width="1.5"/>
+        <polygon points="40,7 40,17 50,12" fill="#c5cbe8"/>
+        <text x="2" y="9" font-size="9" fill="#9aa0bb" font-family="DM Sans">store</text>
+      </svg>
+    </div>
+
+    <!-- Response -->
+    <div style="display:flex; flex-direction:column; align-items:center;">
+      <div class="node teal" style="width:148px;">
+        <div class="node-icon">📤</div>
+        <div class="node-label">Response</div>
+        <div class="node-sub">results + metadata</div>
+        <span class="node-tag">JSON</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════ LEGEND ══════════════════ -->
+  <div class="legend">
+    <div class="legend-item">
+      <svg width="30" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="#c5cbe8" stroke-width="1.5"/><polygon points="18,1 18,9 26,5" fill="#c5cbe8"/></svg>
+      Data flow
+    </div>
+    <div class="legend-item">
+      <svg width="30" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="#c5cbe8" stroke-width="1.5" stroke-dasharray="4 3"/><polygon points="18,1 18,9 26,5" fill="#c5cbe8"/></svg>
+      Internal API call
+    </div>
+    <div class="legend-item">
+      <svg width="30" height="10"><line x1="0" y1="5" x2="22" y2="5" stroke="#f4a020" stroke-width="1.5" stroke-dasharray="4 3"/><polygon points="18,1 18,9 26,5" fill="#f4a020"/></svg>
+      Cache miss path
+    </div>
+    <div class="legend-item">
+      <div style="width:12px;height:12px;border-radius:3px;background:#eef2ff;border:1.5px solid #c4d4fd;"></div>
+      Ingestion step
+    </div>
+    <div class="legend-item">
+      <div style="width:12px;height:12px;border-radius:3px;background:#fff0f4;border:1.5px solid #fcc8d4;"></div>
+      ML component
+    </div>
+    <div class="legend-item">
+      <div style="width:12px;height:12px;border-radius:3px;background:#eafaf4;border:1.5px solid #b6eedd;"></div>
+      Cache / storage
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
