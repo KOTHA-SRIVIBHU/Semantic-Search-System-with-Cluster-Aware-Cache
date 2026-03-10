@@ -12,7 +12,7 @@ This project implements a semantic search system over the **20 Newsgroups datase
 
 # System Architecture
 
-![Architecture Diagram](docs/architecture.png)
+## Architecture Diagram: (https://github.com/KOTHA-SRIVIBHU/Semantic-Search-System-with-Cluster-Aware-Cache/blob/main/architecture-diagram.html)
 
 1. **Data Preparation** – Load 20 Newsgroups, remove headers/footers/quotes, clean text.  
 2. **Embeddings** – `all-MiniLM-L6-v2` (384-dim, normalized) via Sentence-Transformers.  
