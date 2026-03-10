@@ -25,7 +25,7 @@ Architecture Diagram: (https://github.com/KOTHA-SRIVIBHU/Semantic-Search-System-
 
 # Requirements
 
-- Python **3.8 – 3.10** (tested on **3.10**)  
+- Python **3.8 – 3.10** (tested on **3.10.18**)  
 - See `requirements.txt` for package versions.
 
 ---
