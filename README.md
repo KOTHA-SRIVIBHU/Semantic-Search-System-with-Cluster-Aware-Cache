@@ -1,61 +1,304 @@
-# Semantic Search with Cluster‑Aware Caching
+# Semantic Search with Cluster-Aware Caching
 
-This project implements a semantic search system over the 20 Newsgroups dataset. It features:
-- Fuzzy clustering (GMM) to capture overlapping topics.
-- A custom, cluster‑partitioned semantic cache with LRU eviction.
-- FastAPI endpoints for querying and cache introspection.
+This project implements a semantic search system over the **20 Newsgroups dataset**. It features:
 
-## Architecture
+- **Fuzzy clustering** (Gaussian Mixture Model) to capture overlapping topics.
+- **Custom cluster-partitioned semantic cache** with LRU eviction, built from scratch.
+- **FastAPI** service with three endpoints.
+- **FAISS** vector index for efficient similarity search.
+- **UMAP** visualisation of document clusters.
 
-1. **Data Preparation**: Load and clean the 20 Newsgroups corpus (headers/footers/quotes removed).
-2. **Embeddings**: `all-MiniLM-L6-v2` from sentence‑transformers (384‑d, normalized).
-3. **Vector Store**: FAISS index with inner product (cosine) for fast retrieval.
-4. **Fuzzy Clustering**: Gaussian Mixture Model with BIC‑based component selection. Each document gets a probability distribution over clusters.
-5. **Semantic Cache**: 
-   - A `ClusterCacheManager` holds one `ClusterCache` per cluster.
-   - Lookup: embed query → predict dominant cluster → search only that cluster’s cache via cosine similarity.
-   - LRU eviction and optional TTL per cache.
-   - Cache hit/miss stats are aggregated globally.
-6. **Retrieval**: On cache miss, search FAISS for top‑k similar documents.
-7. **API**:
-   - `POST /query` – returns results with cache hit info.
-   - `GET /cache/stats` – overall cache statistics.
-   - `DELETE /cache` – flush all caches.
+---
 
-## Why This Design?
+# System Architecture
 
-- **Embedding model**: `all-MiniLM-L6-v2` balances speed and quality; 384‑d is sufficient for clustering and caching.
-- **Fuzzy clustering**: GMM provides soft assignments, matching the real overlapping nature of news topics.
-- **Cluster‑partitioned cache**: Reduces search space (only one cluster’s cache per query) and allows per‑cluster tuning.
-- **Custom cache**: No external dependencies; full control over eviction and similarity logic.
+![Architecture Diagram](docs/architecture.png)
 
-## Cluster Analysis
+1. **Data Preparation** – Load 20 Newsgroups, remove headers/footers/quotes, clean text.  
+2. **Embeddings** – `all-MiniLM-L6-v2` (384-dim, normalized) via Sentence-Transformers.  
+3. **Fuzzy Clustering** – GMM with BIC-based component selection (30 clusters).  
+4. **Vector Store** – FAISS index (inner product) for cosine similarity search.  
+5. **Semantic Cache** – `ClusterCacheManager` with per-cluster `ClusterCache` (LRU, TTL optional).  
+6. **API** – FastAPI with `/query`, `/cache/stats`, and `DELETE /cache`.
 
-- Number of clusters determined by BIC (typically 18–24 for this dataset).
-- Representative documents and keywords extracted for each cluster (see `cluster_analysis.py`).
-- UMAP visualization saved as `data/cluster_visualization.png`.
+---
 
-## Cache Threshold Tuning
+# Requirements
 
-The similarity threshold (default 0.85) controls cache aggressiveness:
-- **Low threshold** → more hits, but risk of returning semantically different results.
-- **High threshold** → fewer hits, higher precision.
-The value can be changed in `config.py` (CACHE_THRESHOLD). You can experiment to find the best balance for your use case.
+- Python **3.8 – 3.10** (tested on **3.10**)  
+- See `requirements.txt` for package versions.
 
-## How to Run
+---
 
-### Using Python (local)
+# Setup & Installation
+
+## 1. Clone the repository
 
 ```bash
-# 1. Create virtual environment
+git clone https://github.com/yourusername/trademarkia-search.git
+cd trademarkia-search
+```
+
+## 2. Create and activate a virtual environment
+
+```bash
 python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
+```
 
-# 2. Install dependencies
+### Linux / macOS
+
+```bash
+source venv/bin/activate
+```
+
+### Windows
+
+```bash
+venv\Scripts\activate
+```
+
+---
+
+## 3. Install dependencies
+
+```bash
+pip install --upgrade pip
 pip install -r requirements.txt
+```
 
-# 3. Precompute data (embeddings, clustering, etc.)
-python scripts/precompute.py
+---
 
-# 4. Start the API
+## 4. Download the embedding model locally (to avoid timeouts)
+
+```bash
+huggingface-cli download sentence-transformers/all-MiniLM-L6-v2 \
+  --local-dir ./models/all-MiniLM-L6-v2 \
+  --include "pytorch_model.bin" \
+  --include "*.json" \
+  --include "vocab.txt" \
+  --include "modules.json" \
+  --include "special_tokens_map.json"
+```
+
+If `huggingface-cli` is not available:
+
+```bash
+pip install huggingface-hub
+```
+
+---
+
+## 5. Run the precomputation script
+
+This loads the dataset, generates embeddings, builds the FAISS index, and fits the GMM.
+
+```bash
+python -m scripts.precompute
+```
+
+This will create the following files in the **data/** directory:
+
+```
+texts.pkl
+embeddings.npy
+faiss.index
+gmm.pkl
+cluster_probs.npy
+centroids.npy
+cluster_visualization.png
+```
+
+**Note**
+
+The first run downloads the **20 Newsgroups dataset** and may take **10–20 minutes on CPU**.
+
+---
+
+# Running the API
+
+Start the FastAPI server:
+
+```bash
 uvicorn main:app --reload
+```
+
+API will run at:
+
+```
+http://localhost:8000
+```
+
+Interactive documentation:
+
+```
+http://localhost:8000/docs
+```
+
+---
+
+# API Endpoints
+
+| Method | Endpoint | Description |
+|------|------|------|
+| POST | `/query` | Submit a query and return search results |
+| GET | `/cache/stats` | View cache statistics |
+| DELETE | `/cache` | Flush entire cache |
+
+---
+
+# Example Request
+
+```bash
+curl -X POST "http://localhost:8000/query" \
+     -H "Content-Type: application/json" \
+     -d '{"query": "Space shuttle launch"}'
+```
+
+---
+
+# Example Response (Cache Miss)
+
+```json
+{
+  "query": "Space shuttle launch",
+  "cache_hit": false,
+  "matched_query": null,
+  "similarity_score": null,
+  "dominant_cluster": 18,
+  "results": [
+    {
+      "document_id": 4672,
+      "text": "Archive-name: space/schedule ...",
+      "similarity": 0.6015
+    }
+  ]
+}
+```
+
+---
+
+# Cache Design
+
+The cache is **cluster-partitioned**.
+
+- A `ClusterCacheManager` holds one **ClusterCache per cluster**.
+- Each cluster cache uses an **OrderedDict** to implement **LRU eviction**.
+
+### Query Flow
+
+1. Embed the query  
+2. Predict dominant cluster using GMM  
+3. Search **only that cluster cache** for similar queries  
+4. If similarity ≥ threshold → **Cache Hit**  
+5. Otherwise → search FAISS and store result in cache
+
+The similarity threshold (**default 0.85**) is configurable in `config.py`.
+
+---
+
+# Cluster Analysis
+
+The GMM selected **30 clusters** using **BIC**.
+
+| Cluster | Top Keywords |
+|------|------|
+| 0 | drive, scsi, disk, drives, ide, hard |
+| 6 | god, religion, believe, atheism |
+| 7 | baseball, game, runs, players |
+| 11 | armenian, turkey, genocide |
+| 15 | car, engine, miles |
+| 18 | space, nasa, launch, mission |
+| 21 | windows, dos, files |
+| 24 | jesus, bible, church |
+| 26 | government, rights, law |
+| 29 | gun, weapons, crime |
+
+A **UMAP visualization** is saved as:
+
+```
+data/cluster_visualization.png
+```
+
+---
+
+# Docker
+
+A **Dockerfile** is provided.
+
+## Build Image
+
+```bash
+docker build -t trademarkia-search .
+```
+
+## Run Container
+
+```bash
+docker run -p 8000:8000 trademarkia-search
+```
+
+The Docker build runs the **precomputation script**, so models and data are included in the image.
+
+---
+
+# Project Structure
+
+```
+.
+├── api/
+├── cache/
+├── clustering/
+├── config.py
+├── data/
+├── embeddings/
+├── main.py
+├── models/
+├── preprocessing/
+├── retrieval/
+├── scripts/
+├── utils/
+├── requirements.txt
+├── Dockerfile
+└── README.md
+```
+
+---
+
+# Tuning the Cache Threshold
+
+The key parameter is:
+
+```
+CACHE_THRESHOLD
+```
+
+Location:
+
+```
+config.py
+```
+
+Typical values:
+
+```
+0.8 – 0.9
+```
+
+Lower threshold → more hits but less precise  
+Higher threshold → fewer hits but more precise
+
+---
+
+# Notes
+
+- `data/` and `models/` are **ignored in git**.
+- They are generated by the **precomputation script**.
+- If embedding runs out of memory, reduce `batch_size` in:
+
+```
+embeddings/embedder.py
+```
+
+- The system is **thread-safe** (cache uses locks).
+
+---
