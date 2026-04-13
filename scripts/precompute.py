@@ -9,6 +9,8 @@ import pickle
 import numpy as np
 
 def main():
+    config.ensure_data_dir()
+
     # 1. Load & clean
     texts = load_and_clean()
     with open(config.TEXTS_FILE, "wb") as f:

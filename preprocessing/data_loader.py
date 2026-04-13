@@ -23,6 +23,7 @@ def load_and_clean() -> List[str]:
     return texts
 
 if __name__ == "__main__":
+    config.ensure_data_dir()
     texts = load_and_clean()
     with open(config.TEXTS_FILE, "wb") as f:
         pickle.dump(texts, f)

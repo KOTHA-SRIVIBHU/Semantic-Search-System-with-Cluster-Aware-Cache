@@ -10,6 +10,10 @@ CLUSTER_PROBS_FILE = f"{DATA_DIR}/cluster_probs.npy"
 CENTROIDS_FILE = f"{DATA_DIR}/centroids.npy"
 UMAP_PLOT_FILE = f"{DATA_DIR}/cluster_visualization.png"
 
+
+def ensure_data_dir() -> None:
+    os.makedirs(DATA_DIR, exist_ok=True)
+
 # Embeddings
 EMBEDDING_MODEL = "./models/all-MiniLM-L6-v2"
 EMBED_DIM = 384
